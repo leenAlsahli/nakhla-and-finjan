@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="htmlRoot">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لعبة إكس أو | Tic-Tac-Toe</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+/* تخزين الالوان بفاريبلز  */
+:root{
+  --beige-0:#faf7f2;--beige-1:#f5f0e8;--beige-2:#ede5d8;--beige-3:#e0d5c5;
+  --beige-4:#cfc2ae;--beige-5:#b8a898;--brown-1:#5b8b55;--brown-2:#6d9c72;
+  --brown-3:#d0c0a1;--x-color:#517445;--x-light:#f0e8de;--x-mid:#d4b99a;
+  --o-color:#70836b;--o-light:#e8ede6;--o-mid:#a8c0a4;
+  --radius:18px;--shadow-sm:0 2px 8px rgba(74,59,44,.08);
+  --shadow:0 4px 20px rgba(74,59,44,.12);--shadow-lg:0 8px 40px rgba(74,59,44,.18);
+  --card-bg:#ffffff;
+}
+/*  البودي للخلفيه والصفحه  */
+body{background-color:var(--beige-1);color:var(--brown-3);font-family:'Tajawal',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
+body.lang-en{font-family:'Outfit','Tajawal',sans-serif;}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,var(--beige-4) 1px,transparent 1px);background-size:30px 30px;opacity:.35;pointer-events:none;z-index:0;}
+.diriyah-bottom{position:fixed;bottom:0;left:0;width:100%;height:60vh;z-index:-1;background:linear-gradient(to top,var(--beige-1) 15%,transparent 100%),url("Diriyah.jpg") no-repeat center bottom/cover;opacity:.5;pointer-events:none;mask-image:linear-gradient(to top,black 50%,transparent 100%);-webkit-mask-image:linear-gradient(to top,black 50%,transparent 100%);}
+/*  زر اللغة  */
+.lang-toggle-bar{position:fixed;top:14px;left:16px;z-index:999;display:flex;background:var(--beige-0);border:1.5px solid var(--beige-3);border-radius:12px;box-shadow:var(--shadow-sm);overflow:hidden;}
+.lang-btn{padding:7px 14px;font-size:13px;font-weight:700;border:none;background:transparent;cursor:pointer;transition:all .18s;color:var(--beige-5);font-family:inherit;}
+.lang-btn.active{background:var(--brown-2);color:var(--beige-0);}
+.lang-btn:hover:not(.active){background:var(--beige-2);color:var(--brown-2);}
+/* السكرينز */
+.screen{position:relative;z-index:1;width:100%;display:none;flex-direction:column;align-items:center;padding:10px 24px 80px;}
+.screen.active{display:flex;}
+.screen-header{text-align:center;margin-bottom:10px;width:100%;display:flex;flex-direction:column;align-items:center;}
+.logo-img{width:260px;height:auto;object-fit:contain;margin-top:4px;}
+.logo-fallback{width:120px;height:64px;margin:4px auto 8px;display:flex;align-items:center;justify-content:center;background:var(--beige-2);border:2px dashed var(--beige-4);border-radius:14px;font-size:11px;color:var(--beige-5);}
+.screen-divider{width:60px;height:3px;background:linear-gradient(90deg,transparent,var(--brown-2),transparent);margin:6px auto 4px;border-radius:10px;}
+.screen-subtitle{font-size:34px;font-weight:900;letter-spacing:3px;color:var(--brown-2);text-transform:uppercase;margin-top:-18px;margin-bottom:10px;}
+/*  ودجتس الاعدادات*/
+#setupScreen{max-width:560px;gap:0;padding-top:4px;}
+.setup-card{width:100%;max-width:560px;margin:10px auto;background:var(--card-bg);border-radius:24px;padding:28px 32px;box-shadow:var(--shadow);border:1.5px solid var(--beige-2);transition:box-shadow .25s;opacity:0;animation:fadeInUp .8s cubic-bezier(.2,.8,.2,1) forwards;}
+.setup-card:nth-child(2){animation-delay:.1s;}
+.setup-card:nth-child(3){animation-delay:.2s;}
+.setup-card:hover{box-shadow:var(--shadow-lg);}
+.field-label{font-size:11px;font-weight:700;letter-spacing:2px;color:#d0b697;text-transform:uppercase;margin-bottom:10px;}
+
+/*  تنسيق الانبوت للاسم */
+.name-input{width:100%;background:var(--beige-1);border:1.5px solid var(--beige-3);border-radius:12px;padding:13px 16px;font-family:'Tajawal','Outfit',sans-serif;font-size:16px;font-weight:500;color:#867158;outline:none;transition:border-color .2s,box-shadow .2s;text-align:right;}
+body.lang-en .name-input{text-align:left;}
+.name-input::placeholder{color:var(--beige-4);}
+.name-input:focus{border-color:var(--brown-1);box-shadow:0 0 0 3px rgba(91,139,85,.12);}
+
+/*  قريد اختيار مود اللعبه   */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.mode-btn{background:var(--beige-1);border:1.5px solid var(--beige-3);border-radius:14px;padding:16px 10px;cursor:pointer;text-align:center;transition:all .2s;}
+.mode-btn:hover{border-color:var(--brown-1);background:var(--beige-0);transform:translateY(-2px);box-shadow:var(--shadow-sm);}
+.mode-btn.selected{border-color:var(--brown-1);background:var(--x-light);box-shadow:0 0 0 3px rgba(91,139,85,.15);}
+.mode-sado{width:44px;height:44px;object-fit:contain;margin:0 auto 6px;display:block;}
+.mode-title{font-size:13px;font-weight:700;color:var(--brown-3);margin-bottom:3px;}
+.mode-sub{font-size:11px;color:var(--beige-5);}
+
+/*   الودجت حقت اعدادات الذكاء  */
+.ai-options-card{background:var(--beige-0);border:1.5px solid var(--beige-3);border-radius:var(--radius);padding:20px 28px;box-shadow:var(--shadow);width:100%;max-width:560px;margin:8px auto;display:none;}
+.ai-options-card.visible{display:block;}
+.ai-player-section{margin-bottom:16px;}
+.ai-player-section:last-child{margin-bottom:0;}
+.ai-section-title{font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--brown-1);text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1.5px solid var(--beige-2);}
+.options-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.option-group{display:flex;flex-direction:column;gap:7px;}
+.option-label{font-size:11px;font-weight:600;letter-spacing:1px;color:var(--beige-5);text-transform:uppercase;}
+.styled-select{position:relative;}
+.styled-select select{width:100%;background:var(--beige-1);border:1.5px solid var(--beige-3);border-radius:10px;padding:10px 14px;font-family:'Tajawal','Outfit',sans-serif;font-size:14px;font-weight:500;color:var(--brown-3);cursor:pointer;outline:none;appearance:none;transition:border-color .2s;text-align:right;}
+body.lang-en .styled-select select{text-align:left;}
+.styled-select select:focus{border-color:var(--brown-1);}
+.styled-select::after{content:'▾';position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--beige-4);font-size:12px;}
+.depth-row{display:flex;align-items:center;gap:10px;background:var(--beige-1);border:1.5px solid var(--beige-3);border-radius:10px;padding:10px 14px;}
+.depth-val{font-size:15px;font-weight:800;color:var(--brown-1);min-width:46px;text-align:center;}
+input[type=range]{flex:1;height:4px;cursor:pointer;accent-color:var(--brown-1);border-radius:4px;direction:ltr;}
+/* ازرار */
+.btn-primary{width:100%;background:var(--brown-2);color:var(--beige-0);border:none;border-radius:14px;font-family:'Tajawal','Outfit',sans-serif;font-size:17px;font-weight:700;cursor:pointer;transition:all .4s cubic-bezier(.175,.885,.32,1.275);box-shadow:0 4px 16px rgba(91,139,85,.3);position:relative;display:flex;align-items:center;justify-content:center;padding:16px 70px;overflow:hidden;max-width:560px;margin:6px auto;}
+.btn-primary:hover{background:var(--brown-1);transform:translateY(-2px);box-shadow:0 6px 24px rgba(91,139,85,.4);}
+.btn-secondary{width:100%;background:var(--beige-0);color:var(--brown-2);border:1.5px solid var(--beige-3);border-radius:14px;font-family:'Tajawal','Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;position:relative;display:flex;align-items:center;justify-content:center;padding:14px 70px;overflow:hidden;max-width:560px;margin:6px auto;}
+.btn-secondary:hover{background:var(--beige-2);transform:translateY(-1px);}
+.btn-text{position:relative;z-index:2;}
+.btn-side{position:absolute;top:50%;transform:translateY(-50%);width:60px;height:60px;background:url("sado.png") no-repeat center/contain;opacity:.9;}
+.btn-side.right{right:8px;}
+.btn-side.left{left:8px;}
+/*  هيدر القيم سكرين   */
+#gameScreen{max-width:1060px;gap:14px;padding-top:18px;}
+.game-header{display:flex;align-items:center;justify-content:space-between;width:100%;}
+.game-logo{width:130px;height:auto;object-fit:contain;margin-inline-end:-170px!important;}
+.game-logo-fallback{width:130px;height:80px;display:flex;align-items:center;justify-content:center;background:var(--beige-2);border:1.5px dashed var(--beige-4);border-radius:10px;font-size:10px;color:var(--beige-5);}
+/* تخطيط القيم   */
+.main-layout{display:grid;grid-template-columns:210px 1fr 210px;gap:16px;width:100%;align-items:start;}
+.panel{background:var(--beige-0);border:1.5px solid var(--beige-3);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:box-shadow .3s,border-color .3s;}
+.panel.x-active{border-color:var(--x-mid);box-shadow:var(--shadow),0 0 0 3px rgba(124,92,62,.1);}
+.panel.o-active{border-color:var(--o-mid);box-shadow:var(--shadow),0 0 0 3px rgba(74,103,65,.1);}
+.panel-top-line{position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0;}
+.x-panel .panel-top-line{background:linear-gradient(90deg,var(--x-color),var(--x-mid));}
+.o-panel .panel-top-line{background:linear-gradient(90deg,var(--o-color),var(--o-mid));}
+.panel-label{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--beige-5);margin-bottom:12px;}
+.player-avatar{width:64px;height:64px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;margin:0 auto 12px;transition:all .3s;}
+.x-avatar{background:var(--x-light);color:var(--x-color);}
+.o-avatar{background:var(--o-light);color:var(--o-color);}
+.x-active .x-avatar{background:var(--x-mid);box-shadow:0 4px 20px rgba(124,92,62,.2);}
+.o-active .o-avatar{background:var(--o-mid);box-shadow:0 4px 20px rgba(74,103,65,.2);}
+.avatar-img{width:44px;height:44px;object-fit:contain;display:block;}
+.player-name-display{text-align:center;font-size:14px;font-weight:700;color:var(--brown-2);margin-bottom:8px;}
+.agent-badge{text-align:center;background:var(--beige-1);border:1px solid var(--beige-3);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--brown-1);margin-bottom:14px;}
+.stats-row{display:flex;gap:8px;}
+.stat-box{flex:1;background:var(--beige-1);border:1px solid var(--beige-3);border-radius:10px;padding:10px 8px;text-align:center;}
+.stat-label{font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--beige-5);margin-bottom:2px;}
+.stat-value{font-size:24px;font-weight:900;line-height:1;}
+.x-stat{color:var(--x-color);}
+.o-stat{color:var(--o-color);}
+.draw-stat{color:var(--brown-1);}
+.queue-section{margin-top:14px;}
+.queue-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--beige-5);margin-bottom:8px;}
+.piece-dots{display:flex;gap:6px;}
+.piece-dot{flex:1;height:32px;border-radius:8px;border:1.5px solid var(--beige-3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--beige-4);transition:all .25s;}
+.x-dot.filled{background:var(--x-light);border-color:var(--x-mid);color:var(--x-color);}
+.x-dot.oldest{background:#fdf4e7;border-color:#e8c98a;color:#b07d2e;border-style:dashed;}
+.o-dot.filled{background:var(--o-light);border-color:var(--o-mid);color:var(--o-color);}
+.o-dot.oldest{background:#fdf4e7;border-color:#e8c98a;color:#b07d2e;border-style:dashed;}
+.turn-track{height:3px;background:var(--beige-2);border-radius:10px;overflow:hidden;margin-top:14px;}
+.turn-fill{height:100%;width:0%;border-radius:10px;transition:width .5s cubic-bezier(.4,0,.2,1);}
+.x-panel .turn-fill{background:var(--x-color);}
+.o-panel .turn-fill{background:var(--o-color);}
+/*  الكولمن اللي بالوسط والبورد  */
+.center-col{display:flex;flex-direction:column;align-items:center;gap:12px;}
+.status-bar{width:100%;background:var(--beige-0);border:1.5px solid var(--beige-3);border-radius:12px;padding:13px 20px;text-align:center;font-size:14px;font-weight:600;color:var(--brown-2);min-height:48px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:var(--shadow-sm);transition:all .3s;}
+.status-bar.x-turn{border-color:var(--x-mid);color:var(--x-color);background:var(--x-light);}
+.status-bar.o-turn{border-color:var(--o-mid);color:var(--o-color);background:var(--o-light);}
+.status-bar.ai-thinking-x{border-color:var(--x-mid);color:var(--x-color);background:var(--x-light);}
+.status-bar.ai-thinking-o{border-color:var(--o-mid);color:var(--o-color);background:var(--o-light);}
+.status-bar.win-state{border-color:#d4b050;color:var(--brown-2);background:#fdf7e3;font-weight:800;}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:blink 1s ease-in-out infinite;}
+.x-turn .status-dot,.ai-thinking-x .status-dot{background:var(--x-color);}
+.o-turn .status-dot,.ai-thinking-o .status-dot{background:var(--o-color);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.board-wrap{background:var(--beige-0);border:1.5px solid var(--beige-3);border-radius:20px;padding:16px;box-shadow:var(--shadow-lg);position:relative;transition:box-shadow .3s;}
+.board-wrap.thinking{box-shadow:var(--shadow-lg),0 0 0 3px var(--x-mid);}
+.board{display:grid;grid-template-columns:repeat(3,min(110px,28vw));grid-template-rows:repeat(3,min(110px,28vw));gap:8px;}
+.cell{width:min(110px,28vw);height:min(110px,28vw);background:var(--beige-1);border:1.5px solid var(--beige-3);border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:all .18s cubic-bezier(.4,0,.2,1);font-size:46px;font-weight:900;user-select:none;overflow:hidden;font-family:'Tajawal',sans-serif;}
+.cell:hover:not(.disabled){background:var(--x-light);border-color:var(--x-mid);transform:scale(1.04);box-shadow:0 4px 20px rgba(124,92,62,.12);}
+.cell.has-x{background:var(--x-light);border-color:var(--x-mid);color:var(--x-color);animation:popIn .28s cubic-bezier(.34,1.56,.64,1);}
+.cell.has-o{background:var(--o-light);border-color:var(--o-mid);color:var(--o-color);animation:popIn .28s cubic-bezier(.34,1.56,.64,1);}
+.cell.oldest-x,.cell.oldest-o{background:#fdf4e7;border-color:#e8c98a;border-style:dashed;color:#b07d2e;opacity:.8;}
+.cell.winning{animation:winPop .5s ease-in-out infinite alternate!important;}
+.cell.winning.has-x{background:var(--x-mid);border-color:var(--x-color);border-style:solid;opacity:1;}
+.cell.winning.has-o{background:var(--o-mid);border-color:var(--o-color);border-style:solid;opacity:1;}
+.cell.disabled{cursor:default;}
+@keyframes popIn{0%{transform:scale(.4) rotate(-8deg);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes winPop{from{transform:scale(1)}to{transform:scale(1.06)}}
+.cell-num{position:absolute;top:6px;right:8px;font-size:10px;font-weight:500;color:var(--beige-4);}
+.expire-tag{position:absolute;bottom:5px;left:7px;font-size:8px;font-weight:700;color:#b07d2e;text-transform:uppercase;}
+.cell-img{width:min(60px,22vw);height:min(60px,22vw);object-fit:contain;display:block;pointer-events:none;}
+.cell.oldest-x .cell-img,.cell.oldest-o .cell-img{opacity:.55;filter:sepia(.4);}
+/*  أزرار الكنترول بالقيم سكرين  */
+.controls{display:flex;flex-direction:column;gap:12px;width:100%;}
+/* ستايل زر ابدا اللعبه */
+.btn-start-game{
+  width:100%;background:var(--brown-2);color:var(--beige-0);
+  border:none;border-radius:14px;font-family:'Tajawal','Outfit',sans-serif;
+  font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;
+  box-shadow:0 4px 16px rgba(91,139,85,.3);
+  position:relative;overflow:hidden;padding:16px 0;
+}
+.btn-start-game:hover{background:var(--brown-1);transform:translateY(-2px);box-shadow:0 6px 24px rgba(91,139,85,.4);}
+/* زر الرجوع والاعاده بالقيم سكرين */
+.bottom-actions-row{display:flex;gap:10px;width:100%;}
+.btn-reset,.btn-back-bottom{
+  flex:1;padding:16px 0;           
+  background:var(--beige-0);color:var(--brown-2);
+  border:1.5px solid var(--beige-3);border-radius:14px;
+  font-family:'Tajawal','Outfit',sans-serif;font-size:15px;font-weight:700;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;
+}
+.btn-reset:hover,.btn-back-bottom:hover{background:var(--beige-2);transform:translateY(-1px);}
+/* نوتفكيشن الفوز */
+.win-overlay{position:fixed;inset:0;background:rgba(74,59,44,.4);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+.win-overlay.visible{display:flex;}
+.win-modal{background:var(--beige-0);border-radius:24px;padding:48px 56px;text-align:center;box-shadow:0 24px 80px rgba(74,59,44,.25);animation:modalIn .4s cubic-bezier(.34,1.56,.64,1);max-width:400px;width:90%;border:1.5px solid var(--beige-3);}
+@keyframes modalIn{from{transform:scale(.7) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.win-title{font-size:32px;font-weight:900;color:var(--brown-2);margin-bottom:8px;}
+.win-player-name{font-size:40px;font-weight:900;line-height:1.1;margin-bottom:6px;}
+.win-player-name.x{color:var(--x-color);}
+.win-player-name.o{color:var(--o-color);}
+.win-algo-name{font-size:16px;font-weight:700;color:var(--brown-1);margin-bottom:4px;}
+.win-sub{font-size:14px;font-weight:600;color:var(--beige-5);margin-bottom:28px;}
+.btn-again{padding:13px 36px;background:var(--brown-2);color:var(--beige-0);border:none;border-radius:12px;font-family:'Tajawal','Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .18s;}
+.btn-again:hover{background:var(--brown-1);transform:translateY(-1px);}
+/*  الاكسبرمنتس سكرين   */
+.exp-header{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:20px;}
+/* اللوقو للقيم سكرين والاكسبرمنتس سكرين  */
+.game-logo,.exp-logo,.game-logo-fallback,.exp-logo-fallback{width:160px;height:auto;object-fit:contain;margin-inline-start:auto!important;margin-inline-end:-130px!important;}
+.game-logo-fallback,.exp-logo-fallback{height:160px;display:flex;align-items:center;justify-content:center;background:var(--beige-2);border:1.5px dashed var(--beige-4);border-radius:10px;font-size:10px;color:var(--beige-5);}
+.exp-sub-tabs{display:flex;gap:6px;flex-wrap:nowrap;width:100%;overflow-x:auto;scrollbar-width:none;}
+.exp-sub-tabs::-webkit-scrollbar{display:none;}
+.exp-tab-btn{flex:1;text-align:center;background:var(--beige-1);border:1.5px solid var(--beige-3);border-radius:12px;padding:10px 8px;cursor:pointer;font-family:'Tajawal','Outfit',sans-serif;font-size:12px;font-weight:700;color:var(--beige-5);transition:all .2s;white-space:nowrap;}
+.exp-tab-btn:hover{border-color:var(--brown-1);background:var(--beige-0);color:var(--brown-2);transform:translateY(-1px);}
+.exp-tab-btn.active{border-color:var(--brown-1);background:var(--x-light);color:var(--brown-1);box-shadow:0 0 0 3px rgba(91,139,85,.12);}
+/*  زر الرجوع لاول صفحه   */
+.btn-back-exp{
+  width:100%;max-width:760px;padding:14px;
+  background:var(--beige-0);border:1.5px solid var(--beige-3);border-radius:12px;
+  color:var(--brown-3);font-family:'Tajawal','Outfit',sans-serif;
+  font-size:15px;font-weight:700;cursor:pointer;
+  margin:24px auto 0;transition:all .2s;display:block;text-align:center;
+}
+.btn-back-exp:hover{background:var(--beige-2);border-color:var(--brown-1);transform:translateY(-1px);}
+
+/*  جدول نتايج الاكسبرمنتس   */
+#expResults{min-height:180px;background:#fff;border:1.5px solid var(--beige-3);border-radius:16px;padding:24px;display:flex;align-items:flex-start;justify-content:center;transition:all .3s;font-family:'Tajawal','Outfit',sans-serif;overflow-x:auto;}
+.games-count-wrap{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:10px;width:100%;}
+.games-count-btn{min-width:62px;height:46px;padding:10px 22px;background:var(--beige-1);border:1.5px solid var(--beige-3);border-radius:10px;font-family:'Tajawal','Outfit',sans-serif;font-size:15px;font-weight:700;color:var(--beige-5);cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;}
+.games-count-btn:hover{border-color:var(--brown-1);background:var(--beige-0);color:var(--brown-2);}
+.games-count-btn.selected{background:var(--brown-2);border-color:var(--brown-1);color:var(--beige-0);box-shadow:0 4px 12px rgba(91,139,85,.25);}
+.exp-table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;font-size:13px;font-family:inherit;}
+.exp-table thead tr{background:var(--beige-2);color:var(--brown-1);}
+.exp-table th,.exp-table td{padding:11px 14px;border:1px solid var(--beige-3);text-align:center;}
+.exp-table th{font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;}
+.exp-table tbody tr:nth-child(even){background:#fdfcfa;}
+.winner-badge{display:inline-block;background:var(--brown-2);color:#fff;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;margin-right:4px;}
+
+/*  الخط   */
+.line{width:100%;height:200px;background-image:url("line.png");background-repeat:repeat-x;background-size:auto 100%;}
+.line-top{margin-bottom:-60px;position:relative;z-index:1;}
+
+/* دخول الودجتس بطريقة فيد ان */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+</style>
+<!-- بدايه كود الاتش تي ام ال   -->
+</head>
+<body>
+
+<!-- زر اللغة -->
+<div class="lang-toggle-bar">
+  <button class="lang-btn active" id="btnAr" onclick="setLang('ar')">العربية</button>
+  <button class="lang-btn" id="btnEn" onclick="setLang('en')">English</button>
+</div>
+
+<div class="line line-top"></div>
+<div class="diriyah-bottom"></div>
+
+<!--  اول سكرين فيها الاسم واختيار اللعبه  -->
+<div class="screen active" id="setupScreen">
+  <div class="screen-header">
+    <img src="logo.png" class="logo-img" alt="شعار" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex';">
+    <div class="logo-fallback" id="logoFallback" style="display:none;">logo.png</div>
+    <div class="screen-subtitle" data-ar="ارحب!" data-en="Welcome!">ارحب!</div>
+  </div>
+  <div class="setup-card">
+    <div class="field-label" id="p1Label" data-ar="اسمك" data-en="Your Name">اسمك</div>
+    <input type="text" class="name-input" id="playerNameInput" data-ar-placeholder="اكتب اسمك هنا..." data-en-placeholder="Enter your name..." placeholder="اكتب اسمك هنا...">
+    <div id="p2NameWrap" style="display:none;margin-top:12px;">
+      <div class="field-label" data-ar="اسم اللاعب الثاني" data-en="Player 2 Name">اسم اللاعب الثاني</div>
+      <input type="text" class="name-input" id="player2NameInput" data-ar-placeholder="اكتب اسم اللاعب الثاني..." data-en-placeholder="Enter player 2 name..." placeholder="اكتب اسم اللاعب الثاني...">
+    </div>
+  </div>
+  <div class="setup-card">
+    <div class="field-label" data-ar="طريقة اللعب" data-en="Game Mode">طريقة اللعب</div>
+    <div class="mode-grid">
+      <div class="mode-btn" data-mode="ai-ai" onclick="selectMode(this)">
+        <img src="paalm.png" class="mode-sado" alt="">
+        <div class="mode-title" data-ar="ذكاء ضد ذكاء" data-en="AI vs AI">ذكاء ضد ذكاء</div>
+        <div class="mode-sub" data-ar="شف شلون الذكاء يلعب" data-en="Watch AI play itself">شف شلون الذكاء يلعب</div>
+      </div>
+      <div class="mode-btn" data-mode="ai-human" onclick="selectMode(this)">
+        <img src="cup.jpg" class="mode-sado" alt="">
+        <div class="mode-title" data-ar="ذكاء ضد إنسان" data-en="AI vs Human">ذكاء ضد إنسان</div>
+        <div class="mode-sub" data-ar="العب ضد الذكاء" data-en="Play against AI">العب ضد الذكاء</div>
+      </div>
+      <div class="mode-btn" data-mode="human-human" onclick="selectMode(this)">
+        <img src="paalm.png" class="mode-sado" alt="">
+        <div class="mode-title" data-ar="إنسان ضد إنسان" data-en="Human vs Human">إنسان ضد إنسان</div>
+        <div class="mode-sub" data-ar="العب مع شخص ثاني" data-en="Play with a friend">العب مع شخص ثاني</div>
+      </div>
+    </div>
+  </div>
+  <!-- اعدادات القورثم الذكاء وقوتها  -->
+  <div class="ai-options-card" id="aiOptionsCard">
+    <div class="field-label" style="margin-bottom:16px;" data-ar="إعدادات الذكاء الاصطناعي" data-en="AI Settings">إعدادات الذكاء الاصطناعي</div>
+    <div class="ai-player-section" id="xAiSection">
+      <div class="ai-section-title" id="xSectionTitle" data-ar="خوارزمية اللاعب الأول" data-en="Player 1 Algorithm">خوارزمية اللاعب الأول</div>
+      <div class="options-row">
+        <div class="option-group">
+          <div class="option-label" data-ar="الخوارزمية" data-en="Algorithm">الخوارزمية</div>
+          <div class="styled-select">
+            <select id="xAlgo" onchange="onAlgoChange()">
+              <option value="ab" data-ar="ألفا بيتا" data-en="Alpha-Beta">ألفا بيتا</option>
+              <option value="mcts" data-ar="مونت كارلو (MCTS)" data-en="Monte Carlo (MCTS)">مونت كارلو (MCTS)</option>
+            </select>
+          </div>
+        </div>
+        <div class="option-group">
+          <div class="option-label" id="xDepthLabel" data-ar="عمق البحث" data-en="Search Depth">عمق البحث</div>
+          <div class="depth-row">
+            <span class="depth-val" id="xDepthDisplay">5</span>
+            <input type="range" id="xDepth" min="1" max="10" value="5" oninput="updateDepthDisplay('x')">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ai-player-section" id="oAiSection" style="display:none;margin-top:16px;padding-top:16px;border-top:1.5px solid var(--beige-2);">
+      <div class="ai-section-title" data-ar="خوارزمية اللاعب الثاني" data-en="Player 2 Algorithm">خوارزمية اللاعب الثاني</div>
+      <div class="options-row">
+        <div class="option-group">
+          <div class="option-label" data-ar="الخوارزمية" data-en="Algorithm">الخوارزمية</div>
+          <div class="styled-select">
+            <select id="oAlgo" onchange="onAlgoChange()">
+              <option value="ab" data-ar="ألفا بيتا" data-en="Alpha-Beta">ألفا بيتا</option>
+              <option value="mcts" data-ar="مونت كارلو (MCTS)" data-en="Monte Carlo (MCTS)">مونت كارلو (MCTS)</option>
+            </select>
+          </div>
+        </div>
+        <div class="option-group">
+          <div class="option-label" id="oDepthLabel" data-ar="عمق البحث" data-en="Search Depth">عمق البحث</div>
+          <div class="depth-row">
+            <span class="depth-val" id="oDepthDisplay">5</span>
+            <input type="range" id="oDepth" min="1" max="10" value="5" oninput="updateDepthDisplay('o')">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="btn-primary" onclick="goToGame()">
+    <span class="btn-side left"></span>
+    <span class="btn-text" data-ar="ابدأ اللعبة" data-en="Start Game">ابدأ اللعبة</span>
+    <span class="btn-side right"></span>
+  </button>
+  <button class="btn-secondary" onclick="switchScreen('expScreen')">
+    <span class="btn-side left"></span>
+    <span class="btn-text" data-ar=" التجارب " data-en=" Experiments "> التجارب </span>
+    <span class="btn-side right"></span>
+  </button>
+</div>
+<!--  قيم سكرين-->
+<div class="screen" id="gameScreen">
+  <div class="game-header">
+    <img src="logo.png" class="game-logo" alt="شعار" onerror="this.style.display='none';document.getElementById('gameLogo2').style.display='flex';">
+    <div class="game-logo-fallback" id="gameLogo2" style="display:none;">logo</div>
+    <div style="width:80px;"></div>
+  </div>
+  <div class="main-layout">
+    <!-- لوحة بلاير النخله   -->
+    <div class="panel x-panel" id="xPanel">
+      <div class="panel-top-line"></div>
+      <div class="panel-label" data-ar="اللاعب الأول" data-en="Player 1">اللاعب الأول</div>
+      <div class="player-avatar x-avatar">
+        <img src="paalm.png" class="avatar-img" alt="نخلة" onerror="this.style.display='none';this.parentElement.textContent='🌴';">
+      </div>
+      <div class="player-name-display" id="xNameDisplay">لاعب 1</div>
+      <div class="agent-badge" id="xAgentBadge" data-ar="بشري" data-en="Human">بشري</div>
+      <div class="turn-track"><div class="turn-fill" id="xBar"></div></div>
+      <div class="queue-section">
+        <div class="queue-label" data-ar="طابور القطع" data-en="Piece Queue">طابور القطع</div>
+        <div class="piece-dots" id="xDots">
+          <div class="piece-dot x-dot">—</div>
+          <div class="piece-dot x-dot">—</div>
+          <div class="piece-dot x-dot">—</div>
+        </div>
+      </div>
+      <div class="stats-row" style="margin-top:14px">
+        <div class="stat-box">
+          <div class="stat-label" data-ar="فوز" data-en="Wins">فوز</div>
+          <div class="stat-value x-stat" id="xWins">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label" data-ar="تعادل" data-en="Draw">تعادل</div>
+          <div class="stat-value draw-stat" id="draws">0</div>
+        </div>
+      </div>
+    </div>
+    <!--الكولمن اللي بالنص فيه الستاتس بار و البورد ا -->
+    <div class="center-col">
+      <div class="status-bar" id="statusBar" data-ar="شد حيلك!" data-en="Let's go!">شد حيلك!</div>
+      <div class="board-wrap" id="boardWrap">
+        <div class="board" id="boardEl">
+          <div class="cell disabled" data-i="0" onclick="onCellClick(0)"><span class="cell-num">0</span></div>
+          <div class="cell disabled" data-i="1" onclick="onCellClick(1)"><span class="cell-num">1</span></div>
+          <div class="cell disabled" data-i="2" onclick="onCellClick(2)"><span class="cell-num">2</span></div>
+          <div class="cell disabled" data-i="3" onclick="onCellClick(3)"><span class="cell-num">3</span></div>
+          <div class="cell disabled" data-i="4" onclick="onCellClick(4)"><span class="cell-num">4</span></div>
+          <div class="cell disabled" data-i="5" onclick="onCellClick(5)"><span class="cell-num">5</span></div>
+          <div class="cell disabled" data-i="6" onclick="onCellClick(6)"><span class="cell-num">6</span></div>
+          <div class="cell disabled" data-i="7" onclick="onCellClick(7)"><span class="cell-num">7</span></div>
+          <div class="cell disabled" data-i="8" onclick="onCellClick(8)"><span class="cell-num">8</span></div>
+        </div>
+      </div>
+      <!-- ازرار الكنترول بالقيم سكرين زي ابدا ورجوع و اعاده-->
+      <div class="controls">
+        <button class="btn-start-game" id="startBtn" onclick="onStartClick()">
+          <span class="btn-side left"></span>
+          <span class="btn-text" data-ar="ابدأ اللعبة" data-en="Start Game">ابدأ اللعبة</span>
+          <span class="btn-side right"></span>
+        </button>
+        <div class="bottom-actions-row">
+          <button class="btn-reset" id="resetBtn" onclick="onResetClick()" data-ar="إعادة" data-en="Reset">إعادة</button>
+          <button class="btn-back-bottom" onclick="switchScreen('setupScreen')" data-ar="رجوع" data-en="Back">رجوع</button>
+        </div>
+      </div>
+    </div>
+    <!--  لوحة بلاير الفنجان  -->
+    <div class="panel o-panel" id="oPanel">
+      <div class="panel-top-line"></div>
+      <div class="panel-label" data-ar="اللاعب الثاني" data-en="Player 2">اللاعب الثاني</div>
+      <div class="player-avatar o-avatar">
+        <img src="cup.jpg" class="avatar-img" alt="فنجال" onerror="this.style.display='none';this.parentElement.textContent='☕';">
+      </div>
+      <div class="player-name-display" id="oNameDisplay">لاعب 2</div>
+      <div class="agent-badge" id="oAgentBadge" data-ar="بشري" data-en="Human">بشري</div>
+      <div class="turn-track"><div class="turn-fill" id="oBar"></div></div>
+      <div class="queue-section">
+        <div class="queue-label" data-ar="طابور القطع" data-en="Piece Queue">طابور القطع</div>
+        <div class="piece-dots" id="oDots">
+          <div class="piece-dot o-dot">—</div>
+          <div class="piece-dot o-dot">—</div>
+          <div class="piece-dot o-dot">—</div>
+        </div>
+      </div>
+      <div class="stats-row" style="margin-top:14px">
+        <div class="stat-box">
+          <div class="stat-label" data-ar="فوز" data-en="Wins">فوز</div>
+          <div class="stat-value o-stat" id="oWins">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label" data-ar="تعادل" data-en="Draw">تعادل</div>
+          <div class="stat-value draw-stat" id="draws2">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--  الاكسبرمنتس سكرين  -->
+<div class="screen" id="expScreen">
+  <div class="exp-header" style="max-width:760px;width:100%;padding:0 0 4px;">
+    <img src="logo.png" class="exp-logo" alt="شعار" onerror="this.style.display='none';document.getElementById('expLogoFallback').style.display='flex';">
+    <div class="exp-logo-fallback" id="expLogoFallback" style="display:none;">logo</div>
+  </div>
+  <div class="screen-header" style="margin-bottom:4px;">
+    <div class="screen-subtitle" data-ar="التجارب" data-en="Experiments">التجارب</div>
+  </div>
+
+  <!-- عدد الماتشز للاكسبرمنتس -->
+  <div class="setup-card" style="max-width:760px;">
+    <div class="field-label" data-ar="عدد الجولات لكل مواجهة" data-en="Games Per Matchup">عدد الجولات لكل مواجهة</div>
+    <div class="games-count-wrap">
+      <button class="games-count-btn selected" data-count="5" onclick="selectGamesCount(this)">5</button>
+      <button class="games-count-btn" data-count="10" onclick="selectGamesCount(this)">10</button>
+      <button class="games-count-btn" data-count="20" onclick="selectGamesCount(this)">20</button>
+      <button class="games-count-btn" data-count="30" onclick="selectGamesCount(this)">30</button>
+      <button class="games-count-btn" data-count="40" onclick="selectGamesCount(this)">40</button>
+      <button class="games-count-btn" data-count="50" onclick="selectGamesCount(this)">50</button>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--beige-5);">
+      <span data-ar="كلما زاد العدد كلما كانت النتائج أدق — لكن يأخذ وقت أطول" data-en="More games = more accurate results, but takes longer">كلما زاد العدد كلما كانت النتائج أدق — لكن يأخذ وقت أطول</span>
+    </div>
+  </div>
+
+  <!-- نوع الاكسبرمنت -->
+  <div class="setup-card" style="max-width:760px;">
+    <div class="field-label" data-ar="نوع الاختبار" data-en="Experiment Type">نوع الاختبار</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="mode-btn" id="expTypeBtnAiAi" onclick="selectExpType('ai_vs_ai',this)">
+        <img src="paalm.png" class="mode-sado" alt="">
+        <div class="mode-title" data-ar="مواجهة ذكاء ضد ذكاء" data-en="AI vs AI Battle">مواجهة AI vs AI</div>
+        <div class="mode-sub" data-ar="تحليل نسبة الفوز" data-en="Win Rate Analysis">تحليل نسبة الفوز</div>
+      </div>
+      <div class="mode-btn" id="expTypeBtnTime" onclick="selectExpType('computation_time',this)">
+        <img src="cup.jpg" class="mode-sado" alt="">
+        <div class="mode-title" data-ar="وقت الحساب" data-en="Computation Time">وقت الحساب</div>
+        <div class="mode-sub" data-ar="سرعة الاستجابة" data-en="Response Speed">سرعة الاستجابة</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- اختيار الماتش -->
+  <div class="setup-card" id="matchupCard" style="max-width:760px;display:none;">
+    <div class="field-label" data-ar="اختر المواجهة" data-en="Select Matchup">اختر المواجهة</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="exp-tab-btn" id="tabAll" onclick="selectMatchupTab('all',this)"><span data-ar="الكل" data-en="All">الكل</span></button>
+      <button class="exp-tab-btn" id="tabAbAb" onclick="selectMatchupTab('ab_vs_ab',this)"><span data-ar="ألفا بيتا ضد ألفا بيتا" data-en="Alpha-Beta vs Alpha-Beta">ألفا بيتا ضد ألفا بيتا</span></button>
+      <button class="exp-tab-btn" id="tabAbMcts" onclick="selectMatchupTab('ab_vs_mcts',this)"><span data-ar="ألفا بيتا ضد مونت كارلو" data-en="Alpha-Beta vs MCTS">ألفا بيتا ضد مونت كارلو</span></button>
+      <button class="exp-tab-btn" id="tabMctsMcts" onclick="selectMatchupTab('mcts_vs_mcts',this)"><span data-ar="مونت كارلو ضد مونت كارلو" data-en="MCTS vs MCTS">مونت كارلو ضد مونت كارلو</span></button>
+    </div>
+    <button class="btn-primary" style="margin-top:16px;max-width:100%;" id="runMatchupBtn" onclick="runSelectedMatchup()">
+      <span class="btn-text" data-ar="تشغيل" data-en="Run">تشغيل</span>
+    </button>
+  </div>
+
+  <!--  اختيار الالقورثم اللي نبي نحسب الكمبيوتيشن تايم حقها  -->
+  <div class="setup-card" id="timeCard" style="max-width:760px;display:none;">
+    <div class="field-label" data-ar="اختر الخوارزمية" data-en="Select Algorithm">اختر الخوارزمية</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <button class="exp-tab-btn" id="timeTabAll" onclick="selectTimeTab('all',this)"><span data-ar="الكل" data-en="All">الكل</span></button>
+      <button class="exp-tab-btn" id="timeTabAb" onclick="selectTimeTab('ab',this)"><span data-ar="ألفا بيتا" data-en="Alpha-Beta">ألفا بيتا</span></button>
+      <button class="exp-tab-btn" id="timeTabMcts" onclick="selectTimeTab('mcts',this)"><span data-ar="مونت كارلو" data-en="MCTS">مونت كارلو</span></button>
+    </div>
+    <button class="btn-primary" style="max-width:100%;" onclick="runTimeExperiment()">
+      <span class="btn-text" data-ar="تشغيل" data-en="Run">تشغيل</span>
+    </button>
+  </div>
+
+  <!-- نتايج الاكسبرمنتس -->
+  <div class="setup-card" style="max-width:760px;">
+    <div class="field-label" data-ar="النتائج" data-en="Analysis Results">النتائج</div>
+    <div id="expResults">
+      <div style="text-align:center;color:var(--beige-5);font-size:14px;line-height:2;max-width:420px;margin:auto;" data-ar="اختر نوع التجربة للبدء." data-en="Choose an experiment type to get started.">اختر نوع التجربة للبدء.</div>
+    </div>
+  </div>
+  <button class="btn-back-exp" onclick="switchScreen('setupScreen')" data-ar="رجوع" data-en="Back">رجوع</button>
+</div>
+
+<!-- نوتفكيشن الفوز -->
+<div class="win-overlay" id="winOverlay">
+  <div class="win-modal">
+    <div class="win-title" id="winTitle" data-ar="كفو!" data-en="Well done!">كفو!</div>
+    <div class="win-player-name" id="winName">X</div>
+    <div class="win-algo-name" id="winAlgoName"></div>
+    <div class="win-sub" id="winSub"></div>
+    <button class="btn-again" onclick="onPlayAgainClick()" data-ar="العب مرة ثانية" data-en="Play Again">العب مرة ثانية</button>
+  </div>
+</div>
+
+
+<script>
+// بدايه لكود جافا سكربت فيه الاكشنز 
+
+  //  اللغة 
+let currentLang='ar';
+function setLang(l){
+  currentLang=l;
+  const h=document.getElementById('htmlRoot');
+  h.setAttribute('lang',l);h.setAttribute('dir',l==='ar'?'rtl':'ltr');
+  document.getElementById('btnAr').classList.toggle('active',l==='ar');
+  document.getElementById('btnEn').classList.toggle('active',l==='en');
+  document.querySelectorAll('[data-ar]').forEach(el=>{if(el.tagName==='INPUT')return;el.textContent=l==='ar'?el.dataset.ar:el.dataset.en;});
+  document.querySelectorAll('[data-ar-placeholder]').forEach(el=>{el.placeholder=l==='ar'?el.dataset.arPlaceholder:el.dataset.enPlaceholder;});
+  document.querySelectorAll('select option[data-ar]').forEach(o=>{o.textContent=l==='ar'?o.dataset.ar:o.dataset.en;});
+  document.body.classList.toggle('lang-en',l==='en');
+  onAlgoChange();
+  const r=document.querySelector('#expResults [data-ar]');
+  if(r)r.textContent=l==='ar'?r.dataset.ar:r.dataset.en;
+}
+// تسوي ابديت لقوة الالقورثم سواء كانت عمق البحث بالالفا بيتا او عدد المحاكاة بمونت كارلو
+function updateDepthDisplay(p){
+  const algo=document.getElementById(p+'Algo').value;
+  const s=document.getElementById(p+'Depth');
+  document.getElementById(p+'DepthDisplay').textContent=algo==='mcts'?parseInt(s.value)*100:s.value;
+}
+//تغير النص الي فوق السلايدر حسب الالقروثم المختاره
+function onAlgoChange(){
+  ['x','o'].forEach(p=>{
+    const isMcts=document.getElementById(p+'Algo').value==='mcts';
+    document.getElementById(p+'DepthLabel').textContent=isMcts?(currentLang==='ar'?'عدد المحاكاة':'Simulations'):(currentLang==='ar'?'عمق البحث':'Search Depth');
+    updateDepthDisplay(p);
+  });
+}
+// اتريبوتس تتبع حالة اللعبه
+let selectedMode=null,config={},game_over_flag=false,aiLoopRunning=false;
+let xWinsCount=0,oWinsCount=0,drawsCount=0,selectedGamesCount=5;
+let selectedExpType=null,selectedMatchupSection=null,selectedTimeSection=null;
+
+// عدد الماتشز اللي نبي نسوي عليها الاكسبرمنت
+function selectGamesCount(el){
+  document.querySelectorAll('.games-count-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedGamesCount=parseInt(el.dataset.count);
+}
+
+//اختار اذا ابي الاكسبرمنت ماتشز ولا كمبيوتيشن تايم
+function selectExpType(type,el){
+  selectedExpType=type;
+  document.querySelectorAll('#expScreen .mode-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('matchupCard').style.display=type==='ai_vs_ai'?'block':'none';
+  document.getElementById('timeCard').style.display=type==='computation_time'?'block':'none';
+  selectedMatchupSection=null;selectedTimeSection=null;
+  document.querySelectorAll('.exp-tab-btn').forEach(b=>b.classList.remove('active'));
+  const isAr=currentLang==='ar';
+  document.getElementById('expResults').innerHTML=`<div style="text-align:center;color:var(--beige-5);font-size:14px;line-height:2;max-width:420px;margin:auto;">${type==='computation_time'?(isAr?'اختر الخوارزمية ثم اضغط تشغيل.':'Select an algorithm then press Run.'):(isAr?'اختر المواجهة ثم اضغط تشغيل.':'Select a matchup then press Run.')}</div>`;
+}
+
+//  اختيار الماتش 
+function selectMatchupTab(s,el){
+  selectedMatchupSection=s;
+  document.querySelectorAll('#matchupCard .exp-tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// اختيار الالقورثم اللي ابي احسب الكمبيوتيشن تايم حقها
+function selectTimeTab(s,el){
+  selectedTimeSection=s;
+  document.querySelectorAll('#timeCard .exp-tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+//  تشغل اكسبرمنت الكمبيوتيشن تايم 
+async function runTimeExperiment(){
+  if(!selectedTimeSection){alert(currentLang==='ar'?'الرجاء اختيار الخوارزمية أولاً':'Please select an algorithm first.');return;}
+  const isAr=currentLang==='ar',N=selectedGamesCount,res=document.getElementById('expResults');
+  res.style.alignItems='center';
+  res.innerHTML=`<div style="text-align:center;padding:40px;"><div style="display:inline-block;width:32px;height:32px;border:3px solid var(--beige-3);border-top-color:var(--brown-2);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px;"></div><div style="color:var(--beige-5);font-size:14px;">${isAr?'جاري القياس...':'Measuring...'}</div></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+  const data=await(await fetch('/api/run_experiment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({experiment_type:'computation_time',games:N})})).json();
+  res.style.alignItems='flex-start';
+  const showAb=selectedTimeSection==='all'||selectedTimeSection==='ab';
+  const showMcts=selectedTimeSection==='all'||selectedTimeSection==='mcts';
+  let html=`<div style="width:100%;animation:fadeIn .4s ease-out;">`;
+  if(showAb)html+=`<div style="font-weight:800;color:var(--brown-1);margin-bottom:10px;font-size:14px;">${isAr?'وقت الحساب — ألفا بيتا':'Computation Time — Alpha-Beta'}</div>
+    <table class="exp-table" style="margin-bottom:16px;"><thead><tr><th>${isAr?'عمق البحث':'Search Depth'}</th><th>${isAr?'وقت أول حركة':'First Move Time'}</th><th>${isAr?'التعقيد':'Complexity'}</th></tr></thead>
+    <tbody><tr><td style="font-weight:600;">k = 2</td><td style="font-weight:700;color:var(--x-color);">${data.k2_time} ms</td><td style="color:var(--beige-5);">${isAr?'منخفض':'Low'}</td></tr>
+    <tr><td style="font-weight:600;">k = 5</td><td style="font-weight:700;color:var(--brown-1);">${data.k5_time} ms</td><td style="color:var(--beige-5);">${isAr?'متوسط':'Medium'}</td></tr>
+    <tr><td style="font-weight:600;">k = 10</td><td style="font-weight:700;color:var(--o-color);">${data.k10_time} ms</td><td style="color:var(--beige-5);">${isAr?'عالٍ':'High'}</td></tr></tbody></table>`;
+  if(showMcts)html+=`<div style="font-weight:800;color:var(--brown-1);margin-bottom:10px;font-size:14px;">${isAr?'وقت الحساب — مونت كارلو (MCTS)':'Computation Time — MCTS'}</div>
+    <table class="exp-table"><thead><tr><th>${isAr?'عدد المحاكاة':'Simulations'}</th><th>${isAr?'وقت أول حركة':'First Move Time'}</th><th>${isAr?'التعقيد':'Complexity'}</th></tr></thead>
+    <tbody><tr><td style="font-weight:600;">200 sims</td><td style="font-weight:700;color:var(--x-color);">${data.s200_time} ms</td><td style="color:var(--beige-5);">${isAr?'منخفض':'Low'}</td></tr>
+    <tr><td style="font-weight:600;">500 sims</td><td style="font-weight:700;color:var(--brown-1);">${data.s500_time} ms</td><td style="color:var(--beige-5);">${isAr?'متوسط':'Medium'}</td></tr>
+    <tr><td style="font-weight:600;">1000 sims</td><td style="font-weight:700;color:var(--o-color);">${data.s1000_time} ms</td><td style="color:var(--beige-5);">${isAr?'عالٍ':'High'}</td></tr></tbody></table>`;
+  html+=`<div style="margin-top:10px;font-size:11px;color:var(--beige-5);text-align:center;">${isAr?'* قياس على لوح فارغ — أول حركة':'* Measured on empty board — first move timing'}</div></div>`;
+  res.innerHTML=html;
+}
+
+//  تشغل القيمز حقت الاكسبرمنتس     
+async function runSelectedMatchup(){
+  if(!selectedMatchupSection){alert(currentLang==='ar'?'الرجاء اختيار نوع المواجهة أولاً':'Please select a matchup type first.');return;}
+  const isAr=currentLang==='ar',N=selectedGamesCount,res=document.getElementById('expResults');
+  res.style.alignItems='center';
+  res.innerHTML=`<div style="text-align:center;padding:40px;"><div style="display:inline-block;width:32px;height:32px;border:3px solid var(--beige-3);border-top-color:var(--brown-2);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px;"></div><div style="color:var(--beige-5);font-size:14px;">${isAr?`جاري تشغيل التجربة (${N} جولات)...`:`Running experiment (${N} games)...`}</div></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+  const data=await(await fetch('/api/run_experiment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({experiment_type:'ai_vs_ai',games:N})})).json();
+  res.style.alignItems='flex-start';
+  const all=[
+    {key:'ab_vs_ab',rows:data.ab_vs_ab,label:isAr?'ألفا بيتا ضد ألفا بيتا':'Alpha-Beta vs Alpha-Beta'},
+    {key:'ab_vs_mcts',rows:data.ab_vs_mcts,label:isAr?'ألفا بيتا ضد مونت كارلو':'Alpha-Beta vs MCTS'},
+    {key:'mcts_vs_mcts',rows:data.mcts_vs_mcts,label:isAr?'مونت كارلو ضد مونت كارلو':'MCTS vs MCTS'},
+  ];
+  const sections=selectedMatchupSection==='all'?all:all.filter(s=>s.key===selectedMatchupSection);
+  let html=`<div style="width:100%;animation:fadeIn .4s ease-out;">`;
+  sections.forEach((sec,i)=>{
+    if(i>0)html+=`<div style="height:20px;"></div>`;
+    let rows='';
+    sec.rows.forEach(r=>{
+      rows+=`<tr><td style="font-weight:600;text-align:${isAr?'right':'left'};">${isAr?translateMatchupName(r.name,true):r.name}</td>
+        <td style="font-weight:700;color:var(--x-color);font-size:17px;">${r.X}</td>
+        <td style="font-weight:700;color:var(--o-color);font-size:17px;">${r.O}</td>
+        <td style="font-weight:600;color:var(--brown-1);font-size:17px;">${r.Draw}</td>
+        <td>${winnerCell(r,isAr)}</td></tr>`;
+    });
+    html+=`<div style="font-weight:800;color:var(--brown-1);margin-bottom:12px;font-size:15px;border-bottom:2px solid var(--beige-2);padding-bottom:6px;">${sec.label}</div>
+      <table class="exp-table" style="margin-bottom:8px;"><thead><tr>
+        <th style="text-align:${isAr?'right':'left'};">${isAr?'المواجهة':'Matchup'}</th>
+        <th style="color:var(--x-color);">${isAr?'فوز النخلة':'Palm Wins'}</th>
+        <th style="color:var(--o-color);">${isAr?'فوز الفنجال':'Cup Wins'}</th>
+        <th>${isAr?'تعادل':'Draw'}</th><th>${isAr?'الأفضل':'Best'}</th>
+      </tr></thead><tbody>${rows}</tbody></table>`;
+  });
+  html+=`<div style="margin-top:12px;font-size:11px;color:var(--beige-5);text-align:center;">${isAr?'* النخله يلعب كـ X — الفنجان يلعب كـ O':'* Palm plays as X — Cup plays as O'} | ${N} ${isAr?'جولات لكل مواجهة':'games per matchup'}</div></div>`;
+  res.innerHTML=html;
+}
+//  اختار مود القيم اذا ابيه بشر ضد بشر او ذكاء وغيره 
+function selectMode(el){
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedMode=el.dataset.mode;
+  const card=document.getElementById('aiOptionsCard');
+  const isAr=currentLang==='ar';
+  document.getElementById('p2NameWrap').style.display=selectedMode==='human-human'?'block':'none';
+  document.getElementById('p1Label').textContent=selectedMode==='human-human'?(isAr?'اسم اللاعب الأول':'Player 1 Name'):(isAr?'اسمك':'Your Name');
+  if(selectedMode==='human-human'){card.classList.remove('visible');}
+  else{
+    card.classList.add('visible');
+    document.getElementById('oAiSection').style.display=selectedMode==='ai-ai'?'block':'none';
+    document.getElementById('xSectionTitle').textContent=selectedMode==='ai-ai'?(isAr?'خوارزمية اللاعب الأول':'Player 1 Algorithm (X)'):(isAr?'خوارزمية الذكاء الاصطناعي':'AI Algorithm');
+  }
+  onAlgoChange();
+}
+// توديني لصفحه القيم 
+function goToGame(){
+  if(!selectedMode){alert(currentLang==='ar'?'الرجاء اختيار طريقة اللعب أولاً':'Please select a game mode first.');return;}
+  const name=document.getElementById('playerNameInput').value.trim()||(currentLang==='ar'?'لاعب':'Player');
+  const xAlgo=document.getElementById('xAlgo').value,oAlgo=document.getElementById('oAlgo').value;
+  const xD=xAlgo==='mcts'?parseInt(document.getElementById('xDepth').value)*100:parseInt(document.getElementById('xDepth').value);
+  const oD=oAlgo==='mcts'?parseInt(document.getElementById('oDepth').value)*100:parseInt(document.getElementById('oDepth').value);
+  const isAr=currentLang==='ar';
+  config={
+    playerName:name,mode:selectedMode,
+    xAgent:(selectedMode==='human-human'||selectedMode==='ai-human')?'human':(xAlgo==='ab'?`ab:${xD}`:`mcts:${xD}`),
+    oAgent:selectedMode==='ai-human'?(xAlgo==='ab'?`ab:${xD}`:`mcts:${xD}`):selectedMode==='ai-ai'?(oAlgo==='ab'?`ab:${oD}`:`mcts:${oD}`):'human',
+    xName:selectedMode==='ai-human'?name:selectedMode==='ai-ai'?(isAr?'ذكاء 1':'AI 1'):name,
+    oName:selectedMode==='human-human'?(document.getElementById('player2NameInput').value.trim()||(isAr?'لاعب 2':'Player 2')):selectedMode==='ai-ai'?(isAr?'ذكاء 2':'AI 2'):(isAr?'الذكاء الاصطناعي':'AI'),
+    xBadge:(selectedMode==='human-human'||selectedMode==='ai-human')?(isAr?'بشري':'Human'):(xAlgo==='ab'?`Alpha-Beta k=${xD}`:`MCTS ×${xD}`),
+    oBadge:selectedMode==='ai-human'?(xAlgo==='ab'?`Alpha-Beta k=${xD}`:`MCTS ×${xD}`):selectedMode==='ai-ai'?(oAlgo==='ab'?`Alpha-Beta k=${oD}`:`MCTS ×${oD}`):(isAr?'بشري':'Human'),
+    xAlgoLabel:xAlgo==='ab'?`Alpha-Beta (depth ${xD})`:`MCTS (×${xD})`,
+    oAlgoLabel:oAlgo==='ab'?`Alpha-Beta (depth ${oD})`:`MCTS (×${oD})`,
+  };
+  document.getElementById('xNameDisplay').textContent=config.xName;
+  document.getElementById('oNameDisplay').textContent=config.oName;
+  document.getElementById('xAgentBadge').textContent=config.xBadge;
+  document.getElementById('oAgentBadge').textContent=config.oBadge;
+  xWinsCount=oWinsCount=drawsCount=0;
+  updateStats(0,0,0);
+  game_over_flag=false;
+  renderBoard({board:Array(9).fill(' '),histX:[],histO:[]});
+  setStatus(isAr?'شد حيلك!':"Let's go!",'');
+  switchScreen('gameScreen');
+}
+//تبدا اللعبه 
+async function onStartClick(){
+  game_over_flag=false;aiLoopRunning=false;
+  setStatus(currentLang==='ar'?'جاري التحميل...':'Loading...','');
+  const state=await(await fetch('/api/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({config})})).json();
+  handleState(state);
+  await aiLoopIfNeeded(state);
+}
+//اذا ضغطت على السيل تشوف اذا مسموح او لا وتسوي ابديت للبورد لو مسموح 
+async function onCellClick(idx){
+  if(game_over_flag||aiLoopRunning)return;
+  if((_currentTurn==='X'?config.xAgent:config.oAgent)!=='human')return;
+  const state=await(await fetch('/api/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cell:idx})})).json();
+  if(state.error)return;
+  handleState(state);await aiLoopIfNeeded(state);
+}
+//تسوي اعاده للعبه اذا ضغطت عالزر
+async function onResetClick(){
+  aiLoopRunning=false;game_over_flag=false;
+  document.getElementById('winOverlay').classList.remove('visible');
+  await fetch('/api/reset',{method:'POST'}).catch(()=>{});
+  renderBoard({board:Array(9).fill(' '),histX:[],histO:[]});
+  setStatus(currentLang==='ar'?'شد حيلك!':"Let's go!",'');
+}
+//تعيد اللعبه بعد مانفوز
+function onPlayAgainClick(){document.getElementById('winOverlay').classList.remove('visible');onResetClick();}
+let _currentTurn='X';
+
+//تشوف حاله القيم لما وصلتني من السيرفر
+function handleState(state){
+  if(!state)return;
+  _currentTurn=state.currentTurn||'X';
+  renderBoard({board:state.board,histX:state.histX,histO:state.histO,currentTurn:state.currentTurn});
+  if(state.winningCells?.length)state.winningCells.forEach(i=>document.querySelectorAll('.cell')[i].classList.add('winning'));
+  if(!state.gameOver){
+    const isHuman=(state.currentTurn==='X'&&config.xAgent==='human')||(state.currentTurn==='O'&&config.oAgent==='human');
+    if(isHuman)document.querySelectorAll('.cell').forEach((c,i)=>{if(state.board[i]===' ')c.classList.remove('disabled');});
+  }
+  if(state.gameOver&&state.winner){
+    game_over_flag=true;
+    const nm=state.winner==='X'?config.xName:config.oName;
+    showWin(state.winner,nm,config.mode==='ai-ai'?(state.winner==='X'?config.xAlgoLabel:config.oAlgoLabel):'');
+    if(state.winner==='X')xWinsCount++;else oWinsCount++;
+    updateStats(xWinsCount,oWinsCount,drawsCount);
+  }else if(state.gameOver){ // لو  انتهت ال٢٠ دقيقه وانتهى القيم وللان مافي فايز 
+    game_over_flag=true;drawsCount++; //تعادل
+    updateStats(xWinsCount,oWinsCount,drawsCount);
+    setStatus(currentLang==='ar'?'تعادل! ':"It's a Draw! ",'win-state');
+  }else{
+    const nm=state.currentTurn==='X'?config.xName:config.oName;
+    const isAi=(state.currentTurn==='X'&&config.xAgent!=='human')||(state.currentTurn==='O'&&config.oAgent!=='human');
+    const cls=state.currentTurn==='X'?(isAi?'ai-thinking-x':'x-turn'):(isAi?'ai-thinking-o':'o-turn');
+    setStatus(currentLang==='ar'?`${nm} يلعب الآن`:(isAi?`${nm} is playing...`:`${nm}'s turn`),cls);
+  }
+}
+//  فنكشن تحرك الذكاء وتخليه يلعب  
+async function aiLoopIfNeeded(state){
+  // تشيك لو اللعبة اساسا منتهيه عشان تقفل الفنكشن  وما تسوي شي
+  if(!state||state.gameOver)return;
+  const agent=state.currentTurn==='X'?config.xAgent:config.oAgent;
+  //تشيك لو اللاعب بشر او ذكاء عشان ماتحسبه ذكاء وتسوي حركتين فوق بعض
+  if(!agent||agent==='human'||aiLoopRunning)return;
+  aiLoopRunning=true;
+  const nm=state.currentTurn==='X'?config.xName:config.oName;
+  setStatus(currentLang==='ar'?`${nm} يفكر...`:`${nm} is thinking...`,state.currentTurn==='X'?'ai-thinking-x':'ai-thinking-o');
+  await new Promise(r=>setTimeout(r,600));
+  if(!aiLoopRunning)return;
+  const next=await(await fetch('/api/ai_turn',{method:'POST'})).json();
+  aiLoopRunning=false;
+  handleState(next);
+  if(!next.gameOver)await aiLoopIfNeeded(next);
+}
+// ترسم وتسوي ابديت للبورد وتعرض صور الفنجال والنخله 
+//واقدم قطعه تكتب عليها التالي يعني هي القطعه اللي بتختفي
+function renderBoard({board,histX,histO,currentTurn}){
+  document.querySelectorAll('.cell').forEach((cell,i)=>{
+    const v=board[i]||' ',ox=v==='X'&&histX.length===3&&histX[0]===i,oo=v==='O'&&histO.length===3&&histO[0]===i;
+    cell.className='cell';cell.innerHTML='';
+    const n=document.createElement('span');n.className='cell-num';n.textContent=i;cell.appendChild(n);
+    if(v!==' '){
+      const img=document.createElement('img');
+      img.src=v==='X'?'palm.jpg':'cup.jpg';
+      img.alt=v==='X'?(currentLang==='ar'?'نخلة':'Palm'):(currentLang==='ar'?'فنجال':'Cup');
+      img.className='cell-img';
+      if(ox||oo){
+        cell.classList.add(v==='X'?'oldest-x':'oldest-o');cell.appendChild(img);
+        const t=document.createElement('span');t.className='expire-tag';t.textContent=currentLang==='ar'?'التالي':'NEXT';cell.appendChild(t);
+      }else{cell.classList.add('has-'+v.toLowerCase());cell.appendChild(img);}
+      cell.classList.add('disabled');
+    }else{cell.classList.add('disabled');}
+  });
+}
+//يسوي ابديت لكيو القطع اللي حطيتها
+  function updateDots(hX,hO){ 
+  ['X', 'O'].forEach(p => {
+    const h = p === 'X' ? hX : hO;
+    document.querySelectorAll(`#${p.toLowerCase()}Dots .piece-dot`).forEach((d, i) => {
+      d.className = `piece-dot ${p.toLowerCase()}-dot`; 
+      // إذا مليان  يعرض رقمها ويحدد القطعة الأقدم عشان ينتبه اللاعب
+      if (i < h.length) {
+        d.textContent = h[i];
+        d.classList.add(h.length === 3 && i === 0 ? 'oldest' : 'filled');
+      } else {
+        // إذا امبتي نحط شرطه
+        d.textContent = '—';
+      }
+    });
+  });
+}
+// تغير شكل بار البلاير على حسب الدور
+function updateTurnBars(t){
+  document.getElementById('xBar').style.width=t==='X'?'100%':'0%';
+  document.getElementById('oBar').style.width=t==='O'?'100%':'0%';
+  document.getElementById('xPanel').className='panel x-panel'+(t==='X'?' x-active':'');
+  document.getElementById('oPanel').className='panel o-panel'+(t==='O'?' o-active':'');
+}
+//   النوتفكيشن اللي يطلع وقت الفوز ويكتب مين فاز
+function showWin(winner,nm,algo){
+  setStatus(currentLang==='ar'?`فاز ${nm}! `:`${nm} Wins! `,'win-state');
+  document.getElementById('winName').textContent=nm;
+  document.getElementById('winName').className='win-player-name '+winner.toLowerCase();
+  document.getElementById('winTitle').textContent=currentLang==='ar'?'كفو! ':'Well done! ';
+  const a=document.getElementById('winAlgoName');
+  if(algo){a.textContent=algo;a.style.display='block';document.getElementById('winSub').textContent=currentLang==='ar'?'فازت الخوارزمية بالجولة!':'Algorithm wins the round!';}
+  else{a.style.display='none';document.getElementById('winSub').textContent=currentLang==='ar'?`${nm} فاز بالجولة!`:`${nm} wins the round!`;}
+  document.querySelector('.btn-again').textContent=currentLang==='ar'?'العب مرة ثانية':'Play Again';
+  setTimeout(()=>document.getElementById('winOverlay').classList.add('visible'),600);
+}
+// الفنكشن اللي تسوي ابديت لاحصائيات مين فاز ومين خسر 
+function updateStats(x,o,d){
+  document.getElementById('xWins').textContent=x;
+  document.getElementById('oWins').textContent=o;
+  document.getElementById('draws').textContent=d;
+  document.getElementById('draws2').textContent=d;
+}
+// الفنكشن اللي تسوي ابديت للستاتس بار
+function setStatus(msg,cls=''){
+  const dot=['x-turn','o-turn','ai-thinking-x','ai-thinking-o'].includes(cls)?'<span class="status-dot"></span>':'';
+  document.getElementById('statusBar').innerHTML=dot+msg;
+  document.getElementById('statusBar').className='status-bar '+cls;
+}
+// ترانزشنز
+function switchScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+// ترجمة لاسماء الماتش
+function translateMatchupName(name,isAr){
+  if(!isAr)return name;
+  const m={'AB k=2 vs AB k=5':'ألفا-بيتا k=2 ضد ألفا-بيتا k=5','AB k=2 vs AB k=10':'ألفا-بيتا k=2 ضد ألفا-بيتا k=10','AB k=10 vs AB k=5':'ألفا-بيتا k=10 ضد ألفا-بيتا k=5','AB k=2 vs MCTS 200':'ألفا-بيتا k=2 ضد مونت كارلو 200','MCTS 1000 vs AB k=2':'مونت كارلو 1000 ضد ألفا-بيتا k=2','AB k=10 vs MCTS 1000':'ألفا-بيتا k=10 ضد مونت كارلو 1000','MCTS 500 vs AB k=5':'مونت كارلو 500 ضد ألفا-بيتا k=5','MCTS 500 vs MCTS 200':'مونت كارلو 500 ضد مونت كارلو 200','MCTS 1000 vs MCTS 200':'مونت كارلو 1000 ضد مونت كارلو 200','MCTS 500 vs MCTS 1000':'مونت كارلو 500 ضد مونت كارلو 1000'};
+  return m[name]||name;
+}
+function translateAlgoName(n,isAr){return isAr?n.replaceAll('AB','ألفا-بيتا').replaceAll('MCTS','مونت كارلو'):n;}
+function winnerCell(row,isAr){
+  const p=row.name.split(' vs ');
+  if(row.X>row.O)return translateAlgoName(p[0].trim(),isAr);
+  if(row.O>row.X)return translateAlgoName(p[1].trim(),isAr);
+  return isAr?'تعادل':'Draw';
+}
+onAlgoChange();
+</script>
+</body>
+</html>
