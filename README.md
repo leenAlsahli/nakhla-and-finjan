@@ -2,7 +2,6 @@
   <img src="assets/logo.png" alt="Nakhla & Finjan Logo" width="240">
 </p>
 
-# Nakhla & Finjan 
 
 A Saudi-themed take on classic Tic-Tac-Toe, reimagined with AI search algorithms and local cultural symbols in place of the traditional X and O.
 
